@@ -119,3 +119,14 @@ NativeWind 또는 Babel 설정을 변경한 뒤에는 `npm run start:clear`로 �
 - [React Native CLI 시작하기](https://reactnative.dev/docs/getting-started-without-a-framework)
 - [NativeWind CLI 설치](https://www.nativewind.dev/docs/getting-started/installation/frameworkless)
 - [Reanimated CLI 설정](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/)
+
+## RYOKA 홈 화면
+
+Stitch 원본 홈 디자인의 사진, 크림색 배경, 에디토리얼 제목, 가로 카드 목록과 하단 메뉴를 React Native + NativeWind로 구현했습니다.
+
+- 검색어·카테고리·도시로 큐레이션된 장소를 탐색합니다.
+- 장소 상세에서 저장하거나 내 일정에 추가할 수 있습니다.
+- 저장과 일정은 앱 실행 중의 로컬 상태입니다. 재실행 시 초기화되며 예약·로그인·백엔드는 연결되지 않았습니다.
+- 사진은 `assets/images/`, Playfair Display 제목 글꼴과 OFL 라이선스는 `assets/fonts/`에 포함됩니다. 네트워크 이미지 로딩 없이 표시됩니다.
+- 원본 화면: Stitch 프로젝트 `15104297020985350947`, 화면 `d4f7c5146c0b409ba012e21e66bfaba4`.
+- API 키는 앱 코드나 설정에 포함하지 않습니다.

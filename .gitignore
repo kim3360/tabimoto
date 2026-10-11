@@ -186,3 +186,9 @@ local.properties
 *.mobileprovision
 *.pem
 .DS_Store
+
+# Local Google Maps credentials and generated readiness flags
+config/google-maps.local.json
+ios/GoogleMaps.local.xcconfig
+android/google-maps.local.properties
+src/config/googleMaps.generated.ts

@@ -1,8 +1,6 @@
 import { useRef, useState } from 'react';
 import {
-  Image,
   ImageBackground,
-  Modal,
   Pressable,
   ScrollView,
   TextInput,
@@ -10,25 +8,13 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import {
-  SafeAreaProvider,
-  SafeAreaView,
-  initialWindowMetrics,
-} from 'react-native-safe-area-context';
-import {
   ArrowRight,
-  Bell,
-  Bookmark,
-  CalendarDays,
   ChevronRight,
-  CircleUserRound,
-  Compass,
-  House,
   Leaf,
   MapPin,
   Search,
   SlidersHorizontal,
   Star,
-  UserRound,
   X,
 } from 'lucide-react-native';
 import { Fade, IconButton, Label } from '../components/HomePrimitives';
@@ -38,16 +24,7 @@ import {
   destinations,
   type Destination,
 } from '../data/home';
-
-type Panel = '탐색' | '일정' | '저장' | '마이' | '알림' | null;
-const tabs = [
-  { name: '홈', icon: House },
-  { name: '탐색', icon: Compass },
-  { name: '일정', icon: CalendarDays },
-  { name: '저장', icon: Bookmark },
-  { name: '마이', icon: CircleUserRound },
-] as const;
-
+import type { Navigation } from '../navigation/types';
 function Photo({ item, height = 350 }: { item: Destination; height?: number }) {
   return (
     <ImageBackground
@@ -214,59 +191,42 @@ function SearchField({
   );
 }
 
-export function HomeScreen() {
+export function HomeScreen({ nav }: { nav: Navigation }) {
   const { width } = useWindowDimensions();
   const scroll = useRef<ScrollView>(null);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('전체');
   const [city, setCity] = useState('');
-  const [panel, setPanel] = useState<Panel>(null);
-  const [detail, setDetail] = useState<Destination | null>(null);
-  const [saved, setSaved] = useState<string[]>([]);
-  const [planned, setPlanned] = useState<string[]>([]);
   const results = destinations.filter(
     (item) =>
       (category === '전체' ||
         item.category === category ||
         item.tags.includes(category)) &&
       (!city || item.city === city) &&
-      `${item.title} ${item.location} ${item.description} ${item.tags.join(' ')}`
+      `${item.title} ${item.location} ${item.description}`
         .toLowerCase()
         .includes(query.trim().toLowerCase()),
   );
-  const toggleSaved = (id: string) =>
-    setSaved((prev) =>
-      prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id],
-    );
-  const openSearch = () => setPanel('탐색');
+  const setDetail = (item: Destination) =>
+    nav.go({ name: 'detail', placeId: item.id });
+  const openSearch = () =>
+    nav.go({
+      name: 'main',
+      tab: '탐색',
+      query,
+      city,
+      category:
+        category === '예술 & 사찰'
+          ? '명소·사찰'
+          : category === '미식 오마카세'
+            ? '미식·오마카세'
+            : category === '고즈넉한 료칸'
+              ? '료칸·숙소'
+              : '전체',
+    });
   const gourmet = destinations[2];
-
   return (
-    <SafeAreaView className="flex-1 bg-cream">
-      <View className="h-16 flex-row items-center justify-between px-4">
-        <View className="flex-row items-center gap-2">
-          <Image
-            source={require('../../assets/images/ryoka-crest.jpg')}
-            className="h-8 w-8"
-          />
-          <Label className="text-xl font-semibold tracking-[2px]">RYOKA</Label>
-          <Label className="text-[11px] text-secondary">旅香</Label>
-        </View>
-        <View className="flex-row items-center">
-          <IconButton icon={Search} label="검색 열기" onPress={openSearch} />
-          <IconButton
-            icon={Bell}
-            label="알림"
-            onPress={() => setPanel('알림')}
-          />
-          <IconButton
-            icon={UserRound}
-            label="마이 페이지"
-            dark
-            onPress={() => setPanel('마이')}
-          />
-        </View>
-      </View>
+    <View className="flex-1">
       <ScrollView
         ref={scroll}
         showsVerticalScrollIndicator={false}
@@ -433,203 +393,6 @@ export function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-      <View className="h-16 flex-row border-t border-stone bg-cream">
-        {tabs.map(({ name, icon: Icon }) => (
-          <Pressable
-            key={name}
-            accessibilityRole="tab"
-            accessibilityLabel={name}
-            accessibilityState={{
-              selected: panel === name || (!panel && name === '홈'),
-            }}
-            onPress={() => {
-              if (name === '홈') {
-                setPanel(null);
-                scroll.current?.scrollTo({ y: 0, animated: true });
-              } else {
-                setPanel(name);
-              }
-            }}
-            className="flex-1 items-center justify-center gap-1"
-          >
-            <Icon
-              size={22}
-              strokeWidth={1.5}
-              color={name === '홈' ? '#1b1c1a' : '#7b766f'}
-            />
-            <Label
-              className={`text-[11px] ${name === '홈' ? 'text-ink' : 'text-secondary'}`}
-            >
-              {name}
-            </Label>
-          </Pressable>
-        ))}
-      </View>
-      <Modal
-        visible={panel !== null || detail !== null}
-        animationType="slide"
-        onRequestClose={() => {
-          if (detail) {
-            setDetail(null);
-          } else {
-            setPanel(null);
-          }
-        }}
-      >
-        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <SafeAreaView className="flex-1 bg-cream">
-            <View className="h-16 flex-row items-center justify-between px-4">
-              <Label className="text-xl font-semibold">
-                {detail ? '여정 상세' : panel}
-              </Label>
-              <IconButton
-                icon={X}
-                label="닫기"
-                onPress={() => {
-                  if (detail) {
-                    setDetail(null);
-                  } else {
-                    setPanel(null);
-                  }
-                }}
-              />
-            </View>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              className="flex-1"
-              contentContainerClassName="p-4"
-            >
-              {detail ? (
-                <>
-                  <Photo item={detail} height={300} />
-                  <Label className="mb-3 mt-5 text-2xl font-semibold leading-8">
-                    {detail.title}
-                  </Label>
-                  <Label className="mb-6 text-base leading-7 text-muted">
-                    {detail.description}
-                  </Label>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: saved.includes(detail.id) }}
-                    onPress={() => toggleSaved(detail.id)}
-                    className="mb-3 flex-row items-center justify-center gap-2 rounded-xl bg-sand p-4"
-                  >
-                    <Bookmark
-                      size={20}
-                      color="#6b5c4a"
-                      fill={saved.includes(detail.id) ? '#6b5c4a' : 'none'}
-                    />
-                    <Label>
-                      {saved.includes(detail.id)
-                        ? '저장됨 · 저장 취소'
-                        : '이 장소 저장하기'}
-                    </Label>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() =>
-                      setPlanned((prev) =>
-                        prev.includes(detail.id)
-                          ? prev.filter((id) => id !== detail.id)
-                          : [...prev, detail.id],
-                      )
-                    }
-                    className="rounded-xl bg-ink p-4"
-                  >
-                    <Label className="text-center text-white">
-                      {planned.includes(detail.id)
-                        ? '내 일정에 추가됨 · 취소'
-                        : '내 일정에 추가하기'}
-                    </Label>
-                  </Pressable>
-                  <Label className="mt-4 text-xs leading-5 text-secondary">
-                    홈 화면의 큐레이션 정보입니다. 일정 추가는 예약을 진행하지
-                    않습니다.
-                  </Label>
-                </>
-              ) : panel === '탐색' ? (
-                <>
-                  <SearchField
-                    query={query}
-                    setQuery={setQuery}
-                    openSearch={openSearch}
-                  />
-                  <Filters
-                    category={category}
-                    city={city}
-                    setCategory={setCategory}
-                    setCity={setCity}
-                  />
-                  <Label className="mb-4 mt-6 text-sm text-secondary">
-                    {results.length}개의 여정{city ? ` · ${city}` : ''}
-                  </Label>
-                  {results.map((item) => (
-                    <Card
-                      setDetail={setDetail}
-                      key={item.id}
-                      item={item}
-                      compact
-                    />
-                  ))}
-                  {results.length === 0 && (
-                    <Label className="py-12 text-center text-muted">
-                      검색 결과가 없어요. 다른 검색어로 찾아보세요.
-                    </Label>
-                  )}
-                </>
-              ) : panel === '저장' || panel === '일정' ? (
-                <>
-                  {destinations
-                    .filter((item) =>
-                      (panel === '저장' ? saved : planned).includes(item.id),
-                    )
-                    .map((item) => (
-                      <Card
-                        setDetail={setDetail}
-                        key={item.id}
-                        item={item}
-                        compact
-                      />
-                    ))}
-                  {(panel === '저장' ? saved : planned).length === 0 && (
-                    <View className="items-center gap-4 py-16">
-                      <Bookmark size={32} color="#6b5c4a" />
-                      <Label className="text-center text-muted">
-                        {panel === '저장'
-                          ? '마음에 드는 장소를 저장해 보세요.'
-                          : '여정 상세에서 내 일정을 추가해 보세요.'}
-                      </Label>
-                      <Pressable
-                        accessibilityRole="button"
-                        onPress={openSearch}
-                        className="rounded-lg bg-ink px-6 py-3"
-                      >
-                        <Label className="text-white">여정 둘러보기</Label>
-                      </Pressable>
-                    </View>
-                  )}
-                </>
-              ) : panel === '마이' ? (
-                <View className="rounded-xl bg-white p-6">
-                  <CircleUserRound size={40} color="#6b5c4a" />
-                  <Label className="mb-4 mt-4 text-2xl">나의 여행 컬렉션</Label>
-                  <Label className="leading-8 text-muted">
-                    저장한 장소 {saved.length}개{'\n'}일정에 담은 여정{' '}
-                    {planned.length}개
-                  </Label>
-                  <Label className="mt-4 text-xs text-secondary">
-                    현재 앱을 사용하는 동안 컬렉션이 유지됩니다.
-                  </Label>
-                </View>
-              ) : (
-                <Label className="py-16 text-center text-muted">
-                  새로운 알림이 없어요.
-                </Label>
-              )}
-            </ScrollView>
-          </SafeAreaView>
-        </SafeAreaProvider>
-      </Modal>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -1,0 +1,2 @@
+#include? "Pods/Target Support Files/Pods-Tabimoto/Pods-Tabimoto.debug.xcconfig"
+#include? "GoogleMaps.local.xcconfig"
